@@ -16,24 +16,25 @@ import java.util.Map;
 @WebServlet(name = "CustomerController", urlPatterns = "/processcustomer")
 public class CustomerController extends HttpServlet {
 
+    @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         processRequest(request, response);
     }
 
+    @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         processRequest(request, response);
     }
 
     private void processRequest(HttpServletRequest request, HttpServletResponse response) {
 
+        String url;
+
         // Get the customer parameters from the request object
         Map<String, String> customerParameters = getCustomerParametersFromRequest(request);
 
         // Set the customer parameters to the request object
         setCustomerParametersToRequest(request);
-
-        // Set upfront the URL the customer will be redirected to
-        String url = "/WEB-INF/views/customerinfo.jsp";
 
         // Validate the customer parameters
         String firstName = customerParameters.get("firstname");
@@ -44,6 +45,9 @@ public class CustomerController extends HttpServlet {
         if (!violations.isEmpty()) {
             request.setAttribute("violations", violations);
             url = "/";
+        }
+        else {
+            url ="/WEB-INF/views/customerinfo.jsp";
         }
 
         try {
