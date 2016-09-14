@@ -27,7 +27,6 @@ public class CustomerController extends HttpServlet {
     }
 
     private void processRequest(HttpServletRequest request, HttpServletResponse response) {
-
         String url;
         Map<String, String> customerParameters = getCustomerParametersFromRequest(request);
         setCustomerParametersToRequest(request);
