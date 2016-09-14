@@ -29,14 +29,8 @@ public class CustomerController extends HttpServlet {
     private void processRequest(HttpServletRequest request, HttpServletResponse response) {
 
         String url;
-
-        // Get the customer parameters from the request object
         Map<String, String> customerParameters = getCustomerParametersFromRequest(request);
-
-        // Set the customer parameters to the request object
         setCustomerParametersToRequest(request);
-
-        // Validate the customer parameters
         String firstName = customerParameters.get("firstname");
         String lastName = customerParameters.get("lastname");
         String email = customerParameters.get("email");
