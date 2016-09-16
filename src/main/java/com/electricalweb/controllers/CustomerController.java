@@ -9,40 +9,34 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @WebServlet(name = "CustomerController", urlPatterns = "/processcustomer")
 public class CustomerController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        processRequest(request, response);
-    }
+        RequestCustomer customer = RequestCustomer.fromRequestParameters(request);
+        customer.setAsRequestAttributes(request);
+        List<String> violations = customer.validate();
 
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-
-    }
-
-    private void processRequest(HttpServletRequest request, HttpServletResponse response) {
-        String url;
-        Map<String, String> customerParameters = getCustomerParametersFromRequest(request);
-        setCustomerParametersToRequest(request);
-        String firstName = customerParameters.get("firstname");
-        String lastName = customerParameters.get("lastname");
-        String email = customerParameters.get("email");
-
-        List<String> violations = validateCustomerParameters(firstName, lastName, email);
         if (!violations.isEmpty()) {
             request.setAttribute("violations", violations);
-            url = "/";
-        }
-        else {
-            url ="/WEB-INF/views/customerinfo.jsp";
         }
 
+        String url = determineUrl(violations);
+        forwardResponse(url, request, response);
+    }
+
+    private String determineUrl(List<String> violations) {
+        if (!violations.isEmpty()) {
+            return "/";
+        } else {
+            return "/WEB-INF/views/customerinfo.jsp";
+        }
+    }
+
+    private void forwardResponse(String url, HttpServletRequest request, HttpServletResponse response) {
         try {
             request.getRequestDispatcher(url).forward(request, response);
         } catch (ServletException e) {
@@ -52,31 +46,43 @@ public class CustomerController extends HttpServlet {
         }
     }
 
-    private Map<String, String> getCustomerParametersFromRequest(HttpServletRequest request) {
-        Map<String, String> customerParameters = new HashMap<>();
-        customerParameters.put("firstname", request.getParameter("firstname"));
-        customerParameters.put("lastname", request.getParameter("lastname"));
-        customerParameters.put("email", request.getParameter("email"));
-        return customerParameters;
-    }
+    private static class RequestCustomer {
 
-    private void setCustomerParametersToRequest(HttpServletRequest request) {
-        request.setAttribute("firstname", request.getParameter("firstname"));
-        request.setAttribute("lastname", request.getParameter("lastname"));
-        request.setAttribute("email", request.getParameter("email"));
-    }
+        private final String firstName;
+        private final String lastName;
+        private final String email;
 
-    private List<String> validateCustomerParameters(String firstName, String lastName, String email) {
-        List<String> violations = new ArrayList<>();
-        if (!StringValidator.validate(firstName)) {
-            violations.add("First Name is mandatory");
+        private RequestCustomer(String firstName, String lastName, String email) {
+            this.firstName = firstName;
+            this.lastName = lastName;
+            this.email = email;
         }
-        if (!StringValidator.validate(lastName)) {
-            violations.add("Last Name is mandatory");
+
+        public static RequestCustomer fromRequestParameters(HttpServletRequest request) {
+            return new RequestCustomer(
+                    request.getParameter("firstname"),
+                    request.getParameter("lastname"),
+                    request.getParameter("email"));
         }
-        if (!EmailValidator.validate(email)) {
-            violations.add("Email is mandatory and must be a well-formed email address");
+
+        public void setAsRequestAttributes(HttpServletRequest request) {
+            request.setAttribute("firstname", firstName);
+            request.setAttribute("lastname", lastName);
+            request.setAttribute("email", email);
         }
-        return violations;
+
+        public List<String> validate() {
+            List<String> violations = new ArrayList<>();
+            if (!StringValidator.validate(firstName)) {
+                violations.add("First Name is mandatory");
+            }
+            if (!StringValidator.validate(lastName)) {
+                violations.add("Last Name is mandatory");
+            }
+            if (!EmailValidator.validate(email)) {
+                violations.add("Email must be a well-formed address");
+            }
+            return violations;
+        }
     }
 }
